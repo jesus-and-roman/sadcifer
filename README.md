@@ -9,10 +9,11 @@ rouge sang.
 ```
 index.html                  <- le site au complet (HTML/CSS/JS, vanilla)
 supabase_schema.sql          <- à rouler dans Supabase
-assets/img/logo.png          <- logo "Roman-Sadcifer"
+assets/img/logo.png          <- logo "Roman-Sadcifer" (police Sabersong)
 assets/img/favicon.png/.ico  <- favicon "RS" (+ tailles multiples)
 assets/img/{tes-images}.png  <- DÉPOSE ICI tes images pour les publications
 assets/emojis/*.png          <- les 9 réactions (version noire + blanche)
+assets/song/{1-24}.mp3       <- DÉPOSE ICI tes 24 chansons (voir plus bas)
 ```
 
 ## Installation (5 étapes)
@@ -63,6 +64,29 @@ Dans le panneau de publication (visible seulement pour toi, l'admin) :
 - Taille du texte
 - Gras / Italique
 - Image (nom du fichier dans `assets/img/`)
+
+## Musique (24 pistes aléatoires)
+
+Le site a un lecteur audio flottant en bas à droite (bouton play, piste
+suivante, volume). Dépose tes 24 fichiers dans `assets/song/` et nomme-les
+exactement :
+
+```
+assets/song/1.mp3
+assets/song/2.mp3
+...
+assets/song/24.mp3
+```
+
+Le lecteur pige les 24 numéros dans un ordre aléatoire (mélangé), joue une
+chanson à la fois, et passe automatiquement à la suivante à la fin — sans
+jamais répéter avant d'avoir fait le tour des 24. Comme les navigateurs
+bloquent la lecture automatique du son, la musique démarre seulement quand
+quelqu'un clique le bouton ▶ la première fois (c'est normal, c'est une
+règle des navigateurs, pas un bug).
+
+Si un des 24 fichiers manque sur le serveur, le lecteur l'indique
+("Fichier manquant") plutôt que de planter.
 
 ## Les 9 réactions
 
