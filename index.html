@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roman-Sadcifer</title>
+
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/img/favicon-16.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/img/favicon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/img/favicon-180.png">
+<link rel="shortcut icon" href="assets/img/favicon.ico">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Metal+Mania&family=Eater&family=Nosifer&family=Creepster&display=swap" rel="stylesheet">
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+  :root{
+    --bg:#000000;
+    --fg:#ffffff;
+    --dim:#8a8a8a;
+    --blood:#a80000;
+    --blood-bright:#e60000;
+    --border:#2a2a2a;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--fg);
+    font-family:'Courier New', monospace;
+    min-height:100vh;
+  }
+  a{color:var(--blood-bright);}
+  ::selection{background:var(--blood); color:#fff;}
+
+  /* ---------- HEADER ---------- */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 26px;
+    border-bottom:1px solid var(--border);
+    position:sticky; top:0; background:rgba(0,0,0,0.95); backdrop-filter:blur(4px);
+    z-index:50;
+    flex-wrap:wrap; gap:12px;
+  }
+  header .logo-wrap{display:flex; align-items:center; gap:14px;}
+  header img.logo{height:46px; filter:drop-shadow(0 0 6px rgba(255,255,255,0.15));}
+  header .tagline{color:var(--dim); font-size:11px; letter-spacing:2px; text-transform:uppercase;}
+
+  .authbox{display:flex; align-items:center; gap:10px; font-size:13px;}
+  .pill{
+    padding:4px 10px; border:1px solid var(--border); border-radius:20px; color:var(--dim);
+  }
+  .pill.admin{border-color:var(--blood); color:var(--blood-bright);}
+
+  button, .btn{
+    background:transparent; color:var(--fg); border:1px solid var(--fg);
+    padding:8px 16px; cursor:pointer; font-family:inherit; font-size:13px;
+    letter-spacing:1px; text-transform:uppercase; transition:all .15s ease;
+    border-radius:2px;
+  }
+  button:hover, .btn:hover{background:var(--fg); color:#000;}
+  button.danger{border-color:var(--blood); color:var(--blood-bright);}
+  button.danger:hover{background:var(--blood); color:#fff;}
+  button.primary{border-color:var(--blood-bright); color:var(--blood-bright);}
+  button.primary:hover{background:var(--blood-bright); color:#000;}
+  button:disabled{opacity:0.3; cursor:not-allowed;}
+  button:disabled:hover{background:transparent; color:var(--fg);}
+
+  /* ---------- LAYOUT ---------- */
+  main{max-width:720px; margin:0 auto; padding:26px 16px 80px;}
+
+  .hero{text-align:center; margin:34px 0 44px;}
+  .hero img.hero-logo{max-width:min(560px, 90vw); filter:drop-shadow(0 0 10px rgba(255,255,255,0.12));}
+  .hero .sub{color:var(--dim); font-size:12px; letter-spacing:3px; margin-top:10px; text-transform:uppercase;}
+  .hero .blood-line{height:2px; width:80px; background:var(--blood); margin:18px auto 0; box-shadow:0 0 8px var(--blood);}
+
+  /* ---------- COMPOSER (admin only) ---------- */
+  #composer{
+    border:1px solid var(--border); padding:18px; margin-bottom:36px; background:#050505;
+  }
+  #composer h3{margin:0 0 14px; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--blood-bright);}
+  #composer textarea{
+    width:100%; min-height:110px; background:#000; color:#fff; border:1px solid var(--border);
+    padding:10px; font-family:inherit; font-size:15px; resize:vertical;
+  }
+  .composer-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; align-items:center;}
+  .composer-row select, .composer-row input[type=number], .composer-row input[type=text]{
+    background:#000; color:#fff; border:1px solid var(--border); padding:7px 9px; font-family:inherit; font-size:13px;
+  }
+  .toggle-btn{
+    border:1px solid var(--border); background:#000; color:var(--dim); padding:7px 12px; cursor:pointer;
+    font-family:inherit; text-transform:none; letter-spacing:0; border-radius:2px;
+  }
+  .toggle-btn.active{border-color:var(--blood-bright); color:var(--blood-bright);}
+  .composer-actions{display:flex; justify-content:space-between; align-items:center; margin-top:14px;}
+  .img-hint{color:var(--dim); font-size:11px;}
+
+  /* ---------- POSTS ---------- */
+  .post{
+    border-bottom:1px solid var(--border); padding:26px 0;
+  }
+  .post-meta{display:flex; justify-content:space-between; color:var(--dim); font-size:11px; margin-bottom:10px; letter-spacing:1px;}
+  .post-content{white-space:pre-wrap; word-break:break-word; line-height:1.5;}
+  .post img.post-image{max-width:100%; margin-top:14px; border:1px solid var(--border); display:block;}
+  .post-admin-actions{margin-top:10px; display:flex; gap:8px;}
+  .post-admin-actions button{font-size:10px; padding:4px 10px;}
+
+  /* ---------- REACTIONS ---------- */
+  .reactions{display:flex; flex-wrap:wrap; gap:8px; margin-top:16px;}
+  .react-btn{
+    display:flex; align-items:center; gap:6px;
+    border:1px solid var(--border); background:transparent;
+    padding:5px 10px; border-radius:20px; cursor:pointer;
+    font-family:inherit; font-size:12px; color:var(--fg); text-transform:none; letter-spacing:0;
+  }
+  .react-btn img{width:18px; height:18px; display:block;}
+  .react-btn .count{min-width:10px; text-align:center;}
+  .react-btn:hover{border-color:var(--fg);}
+  .react-btn.mine{
+    background:#fff; border-color:var(--blood-bright); color:var(--blood);
+    box-shadow:0 0 10px rgba(230,0,0,0.4);
+  }
+  .react-btn:disabled{opacity:0.35; cursor:not-allowed;}
+  .react-btn:disabled:hover{border-color:var(--border);}
+
+  /* ---------- MODAL ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.88); display:none;
+    align-items:center; justify-content:center; z-index:100; padding:20px;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:#050505; border:1px solid var(--blood); padding:28px; width:100%; max-width:380px;
+    box-shadow:0 0 30px rgba(168,0,0,0.35);
+  }
+  .modal h2{margin:0 0 18px; font-size:16px; letter-spacing:2px; text-transform:uppercase; color:var(--fg); text-align:center;}
+  .modal input{
+    width:100%; background:#000; border:1px solid var(--border); color:#fff; padding:10px;
+    margin-bottom:10px; font-family:inherit; font-size:13px;
+  }
+  .modal .switch-mode{text-align:center; margin-top:12px; font-size:12px; color:var(--dim);}
+  .modal .switch-mode a{cursor:pointer;}
+  .modal .msg{font-size:12px; margin-top:8px; min-height:14px;}
+  .modal .msg.error{color:var(--blood-bright);}
+  .modal .msg.ok{color:#fff;}
+  .modal .close-x{position:absolute; top:14px; right:18px; cursor:pointer; color:var(--dim); font-size:18px;}
+  .modal-wrap{position:relative;}
+
+  .status-banner{
+    border:1px solid var(--blood); background:#0a0000; color:var(--fg); padding:16px 18px;
+    margin-bottom:30px; font-size:13px; line-height:1.6;
+  }
+  .status-banner b{color:var(--blood-bright);}
+
+  /* ---------- ADMIN PANEL ---------- */
+  #adminPanelOverlay .modal{max-width:520px;}
+  .pending-row{
+    display:flex; justify-content:space-between; align-items:center;
+    border-bottom:1px solid var(--border); padding:10px 0; font-size:13px;
+  }
+  .pending-row .actions{display:flex; gap:6px;}
+  .pending-row button{padding:4px 10px; font-size:10px;}
+  .empty-note{color:var(--dim); font-size:12px; text-align:center; padding:20px 0;}
+
+  footer{text-align:center; color:var(--dim); font-size:11px; padding:30px; letter-spacing:1px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-wrap">
+    <img src="assets/img/favicon.png" alt="RS" class="logo">
+    <div class="tagline">Culte du texte</div>
+  </div>
+  <div class="authbox" id="authbox">
+    <!-- rempli par JS -->
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <img src="assets/img/logo.png" alt="Roman-Sadcifer" class="hero-logo">
+    <div class="blood-line"></div>
+    <div class="sub">Ce qui est écrit ici ne s'efface pas</div>
+  </div>
+
+  <div id="statusBanner"></div>
+
+  <div id="composer" style="display:none;">
+    <h3>Nouvelle publication</h3>
+    <textarea id="postContent" placeholder="Écris quelque chose..."></textarea>
+    <div class="composer-row">
+      <select id="fontFamily">
+        <option value="'Courier New', monospace">Courier (défaut)</option>
+        <option value="'Metal Mania', cursive">Metal Mania</option>
+        <option value="'Eater', cursive">Eater</option>
+        <option value="'Nosifer', cursive">Nosifer</option>
+        <option value="'Creepster', cursive">Creepster</option>
+        <option value="Georgia, serif">Georgia</option>
+        <option value="Arial, sans-serif">Arial</option>
+        <option value="Impact, sans-serif">Impact</option>
+      </select>
+      <input type="number" id="fontSize" value="16" min="10" max="72" style="width:70px;" title="Taille du texte">
+      <button type="button" class="toggle-btn" id="boldToggle" title="Gras"><b>G</b></button>
+      <button type="button" class="toggle-btn" id="italicToggle" title="Italique"><i>I</i></button>
+      <input type="text" id="imageName" placeholder="nom-image.png (optionnel)">
+    </div>
+    <div class="img-hint">L'image doit exister dans <code>assets/img/</code> sur le serveur.</div>
+    <div class="composer-actions">
+      <span class="img-hint" id="previewLabel"></span>
+      <button class="primary" id="publishBtn">Publier</button>
+    </div>
+  </div>
+
+  <div id="feed"></div>
+  <div id="feedEmpty" class="empty-note" style="display:none;">Rien n'a encore été écrit ici.</div>
+</main>
+
+<footer>Roman-Sadcifer &middot; propulsé par Supabase</footer>
+
+<!-- ---------- MODAL AUTH ---------- -->
+<div class="overlay" id="authOverlay">
+  <div class="modal modal-wrap">
+    <span class="close-x" id="authClose">&times;</span>
+    <h2 id="authTitle">Connexion</h2>
+    <input type="text" id="authUsername" placeholder="Nom d'utilisateur" style="display:none;">
+    <input type="email" id="authEmail" placeholder="Courriel">
+    <input type="password" id="authPassword" placeholder="Mot de passe">
+    <button class="primary" id="authSubmit" style="width:100%;">Se connecter</button>
+    <div class="msg" id="authMsg"></div>
+    <div class="switch-mode">
+      <span id="switchToSignup">Pas de compte ? <a>Faire une demande</a></span>
+      <span id="switchToLogin" style="display:none;">Déjà membre ? <a>Se connecter</a></span>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- MODAL ADMIN ---------- -->
+<div class="overlay" id="adminPanelOverlay">
+  <div class="modal modal-wrap">
+    <span class="close-x" id="adminClose">&times;</span>
+    <h2>Demandes d'inscription</h2>
+    <div id="pendingList"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   CONFIGURATION — remplace par tes propres clés Supabase
+   ========================================================= */
+const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR-ANON-PUBLIC-KEY";
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const EMOJIS = [
+  {type:"skull", label:"Mort"},
+  {type:"devil", label:"Démon"},
+  {type:"crying", label:"Larmes"},
+  {type:"brokenheart", label:"Coeur brisé"},
+  {type:"flame", label:"Flamme"},
+  {type:"pentagram", label:"Pentagramme"},
+  {type:"ghost", label:"Fantôme"},
+  {type:"bat", label:"Chauve-souris"},
+  {type:"tombstone", label:"Tombe"},
+];
+
+let currentUser = null;   // auth user
+let currentProfile = null; // profiles row
+let posts = [];
+let reactionsByPost = {}; // post_id -> [{user_id, emoji_type}]
+
+/* ---------- UTIL ---------- */
+function escapeHtml(str){
+  return (str||"").replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function isAdmin(){ return currentProfile && currentProfile.is_admin; }
+function isApproved(){ return currentProfile && currentProfile.status === 'approved'; }
+
+/* ---------- AUTH MODAL ---------- */
+const authOverlay = document.getElementById('authOverlay');
+const authTitle = document.getElementById('authTitle');
+const authUsername = document.getElementById('authUsername');
+const authEmail = document.getElementById('authEmail');
+const authPassword = document.getElementById('authPassword');
+const authMsg = document.getElementById('authMsg');
+let authMode = 'login';
+
+function openAuth(mode){
+  authMode = mode;
+  authMsg.textContent = '';
+  authUsername.value=''; authEmail.value=''; authPassword.value='';
+  if(mode === 'signup'){
+    authTitle.textContent = "Demande d'inscription";
+    authUsername.style.display='block';
+    document.getElementById('authSubmit').textContent = "Envoyer la demande";
+    document.getElementById('switchToSignup').style.display='none';
+    document.getElementById('switchToLogin').style.display='block';
+  } else {
+    authTitle.textContent = "Connexion";
+    authUsername.style.display='none';
+    document.getElementById('authSubmit').textContent = "Se connecter";
+    document.getElementById('switchToSignup').style.display='block';
+    document.getElementById('switchToLogin').style.display='none';
+  }
+  authOverlay.classList.add('show');
+}
+document.getElementById('authClose').onclick = () => authOverlay.classList.remove('show');
+document.getElementById('switchToSignup').onclick = () => openAuth('signup');
+document.getElementById('switchToLogin').onclick = () => openAuth('login');
+
+document.getElementById('authSubmit').onclick = async () => {
+  authMsg.className = 'msg';
+  authMsg.textContent = '';
+  const email = authEmail.value.trim();
+  const password = authPassword.value;
+  if(!email || !password){ authMsg.textContent = "Remplis tous les champs."; authMsg.className='msg error'; return; }
+
+  if(authMode === 'signup'){
+    const username = authUsername.value.trim();
+    if(!username){ authMsg.textContent = "Choisis un nom d'utilisateur."; authMsg.className='msg error'; return; }
+    const { data, error } = await sb.auth.signUp({ email, password });
+    if(error){ authMsg.textContent = error.message; authMsg.className='msg error'; return; }
+    if(data.user){
+      const { error: profErr } = await sb.from('profiles').insert({
+        id: data.user.id, username, status: 'pending', is_admin: false
+      });
+      if(profErr){ authMsg.textContent = profErr.message; authMsg.className='msg error'; return; }
+    }
+    authMsg.textContent = "Demande envoyée. Tu dois être approuvé avant de pouvoir réagir.";
+    authMsg.className = 'msg ok';
+    setTimeout(() => { authOverlay.classList.remove('show'); refreshSession(); }, 1800);
+  } else {
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if(error){ authMsg.textContent = error.message; authMsg.className='msg error'; return; }
+    authOverlay.classList.remove('show');
+    refreshSession();
+  }
+};
+
+/* ---------- ADMIN PANEL (approbations) ---------- */
+const adminPanelOverlay = document.getElementById('adminPanelOverlay');
+document.getElementById('adminClose').onclick = () => adminPanelOverlay.classList.remove('show');
+
+async function openAdminPanel(){
+  adminPanelOverlay.classList.add('show');
+  const list = document.getElementById('pendingList');
+  list.innerHTML = '<div class="empty-note">Chargement...</div>';
+  const { data, error } = await sb.from('profiles').select('*').eq('status','pending').order('created_at', {ascending:true});
+  if(error){ list.innerHTML = '<div class="empty-note">Erreur: '+escapeHtml(error.message)+'</div>'; return; }
+  if(!data || data.length === 0){ list.innerHTML = '<div class="empty-note">Aucune demande en attente.</div>'; return; }
+  list.innerHTML = '';
+  data.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'pending-row';
+    row.innerHTML = `<span>${escapeHtml(p.username)}</span>
+      <span class="actions">
+        <button class="primary" data-act="approve" data-id="${p.id}">Approuver</button>
+        <button class="danger" data-act="reject" data-id="${p.id}">Refuser</button>
+      </span>`;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('button').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.id;
+      const status = btn.dataset.act === 'approve' ? 'approved' : 'rejected';
+      const { error } = await sb.from('profiles').update({status}).eq('id', id);
+      if(error){ alert(error.message); return; }
+      openAdminPanel();
+    };
+  });
+}
+
+/* ---------- SESSION / HEADER ---------- */
+async function refreshSession(){
+  const { data: { user } } = await sb.auth.getUser();
+  currentUser = user || null;
+  currentProfile = null;
+
+  if(currentUser){
+    const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
+    currentProfile = data || null;
+  }
+  renderAuthBox();
+  renderStatusBanner();
+  renderComposer();
+  renderFeed();
+}
+
+function renderAuthBox(){
+  const box = document.getElementById('authbox');
+  box.innerHTML = '';
+  if(!currentUser){
+    const loginBtn = document.createElement('button');
+    loginBtn.textContent = 'Connexion';
+    loginBtn.onclick = () => openAuth('login');
+    const signupBtn = document.createElement('button');
+    signupBtn.className = 'primary';
+    signupBtn.textContent = "Faire une demande";
+    signupBtn.onclick = () => openAuth('signup');
+    box.appendChild(loginBtn);
+    box.appendChild(signupBtn);
+    return;
+  }
+  const pill = document.createElement('span');
+  pill.className = 'pill' + (isAdmin() ? ' admin' : '');
+  pill.textContent = currentProfile ? currentProfile.username : currentUser.email;
+  box.appendChild(pill);
+
+  if(isAdmin()){
+    const adminBtn = document.createElement('button');
+    adminBtn.textContent = 'Demandes';
+    adminBtn.onclick = openAdminPanel;
+    box.appendChild(adminBtn);
+  }
+  const logoutBtn = document.createElement('button');
+  logoutBtn.textContent = 'Déconnexion';
+  logoutBtn.onclick = async () => { await sb.auth.signOut(); refreshSession(); };
+  box.appendChild(logoutBtn);
+}
+
+function renderStatusBanner(){
+  const el = document.getElementById('statusBanner');
+  el.innerHTML = '';
+  if(currentUser && currentProfile && currentProfile.status === 'pending'){
+    el.innerHTML = `<div class="status-banner"><b>Demande en attente.</b><br>Ton compte doit être approuvé avant que tu puisses réagir aux publications.</div>`;
+  } else if(currentUser && currentProfile && currentProfile.status === 'rejected'){
+    el.innerHTML = `<div class="status-banner"><b>Demande refusée.</b><br>Ton accès n'a pas été approuvé.</div>`;
+  }
+}
+
+/* ---------- COMPOSER (admin) ---------- */
+function renderComposer(){
+  document.getElementById('composer').style.display = isAdmin() ? 'block' : 'none';
+}
+
+const boldToggle = document.getElementById('boldToggle');
+const italicToggle = document.getElementById('italicToggle');
+boldToggle.onclick = () => boldToggle.classList.toggle('active');
+italicToggle.onclick = () => italicToggle.classList.toggle('active');
+
+document.getElementById('publishBtn').onclick = async () => {
+  if(!isAdmin()) return;
+  const content = document.getElementById('postContent').value.trim();
+  const font_family = document.getElementById('fontFamily').value;
+  const font_size = parseInt(document.getElementById('fontSize').value, 10) || 16;
+  const bold = boldToggle.classList.contains('active');
+  const italic = italicToggle.classList.contains('active');
+  const image_name = document.getElementById('imageName').value.trim() || null;
+  if(!content && !image_name){ return; }
+
+  const { error } = await sb.from('posts').insert({
+    author_id: currentUser.id, content, font_family, font_size, bold, italic, image_name
+  });
+  if(error){ alert(error.message); return; }
+  document.getElementById('postContent').value = '';
+  document.getElementById('imageName').value = '';
+  loadPosts();
+};
+
+/* ---------- FEED ---------- */
+async function loadPosts(){
+  const { data: postData, error } = await sb.from('posts').select('*').order('created_at', {ascending:false});
+  if(error){ console.error(error); return; }
+  posts = postData || [];
+
+  const { data: reactionData } = await sb.from('reactions').select('*');
+  reactionsByPost = {};
+  (reactionData || []).forEach(r => {
+    if(!reactionsByPost[r.post_id]) reactionsByPost[r.post_id] = [];
+    reactionsByPost[r.post_id].push(r);
+  });
+
+  renderFeed();
+}
+
+function renderFeed(){
+  const feed = document.getElementById('feed');
+  const empty = document.getElementById('feedEmpty');
+  feed.innerHTML = '';
+  if(!posts || posts.length === 0){ empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  posts.forEach(post => {
+    const div = document.createElement('div');
+    div.className = 'post';
+
+    const date = new Date(post.created_at).toLocaleString('fr-CA');
+    const style = `font-family:${post.font_family || 'inherit'}; font-size:${post.font_size || 16}px; font-weight:${post.bold ? 'bold':'normal'}; font-style:${post.italic ? 'italic':'normal'};`;
+
+    let imgHtml = '';
+    if(post.image_name){
+      const safeName = encodeURIComponent(post.image_name);
+      imgHtml = `<img class="post-image" src="assets/img/${safeName}" alt="${escapeHtml(post.image_name)}" onerror="this.style.display='none'">`;
+    }
+
+    const myReactions = (reactionsByPost[post.id] || []).filter(r => currentUser && r.user_id === currentUser.id).map(r => r.emoji_type);
+
+    const reactionsHtml = EMOJIS.map(e => {
+      const count = (reactionsByPost[post.id] || []).filter(r => r.emoji_type === e.type).length;
+      const mine = myReactions.includes(e.type);
+      const iconColor = mine ? 'black' : 'white';
+      const disabled = (!currentUser || !isApproved()) ? 'disabled' : '';
+      return `<button class="react-btn ${mine?'mine':''}" ${disabled} data-post="${post.id}" data-emoji="${e.type}" title="${e.label}">
+        <img src="assets/emojis/${e.type}_${iconColor}.png" alt="${e.label}">
+        <span class="count">${count > 0 ? count : ''}</span>
+      </button>`;
+    }).join('');
+
+    div.innerHTML = `
+      <div class="post-meta"><span>Roman-Sadcifer</span><span>${date}</span></div>
+      <div class="post-content" style="${style}">${escapeHtml(post.content)}</div>
+      ${imgHtml}
+      <div class="reactions">${reactionsHtml}</div>
+      ${isAdmin() ? `<div class="post-admin-actions"><button class="danger" data-del="${post.id}">Supprimer</button></div>` : ''}
+    `;
+    feed.appendChild(div);
+  });
+
+  feed.querySelectorAll('.react-btn').forEach(btn => {
+    btn.onclick = () => toggleReaction(btn.dataset.post, btn.dataset.emoji);
+  });
+  feed.querySelectorAll('[data-del]').forEach(btn => {
+    btn.onclick = () => deletePost(btn.dataset.del);
+  });
+}
+
+async function toggleReaction(postId, emojiType){
+  if(!currentUser || !isApproved()) return;
+  const existing = (reactionsByPost[postId] || []).find(r => r.user_id === currentUser.id && r.emoji_type === emojiType);
+  if(existing){
+    await sb.from('reactions').delete().eq('id', existing.id);
+  } else {
+    await sb.from('reactions').insert({ post_id: postId, user_id: currentUser.id, emoji_type: emojiType });
+  }
+  loadPosts();
+}
+
+async function deletePost(postId){
+  if(!isAdmin()) return;
+  if(!confirm('Supprimer cette publication ?')) return;
+  await sb.from('posts').delete().eq('id', postId);
+  loadPosts();
+}
+
+/* ---------- REALTIME ---------- */
+sb.channel('public:posts')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => loadPosts())
+  .subscribe();
+
+sb.channel('public:reactions')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, () => loadPosts())
+  .subscribe();
+
+/* ---------- INIT ---------- */
+sb.auth.onAuthStateChange(() => refreshSession());
+refreshSession();
+loadPosts();
+</script>
+</body>
+</html>
